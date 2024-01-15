@@ -9,13 +9,17 @@ from sklearn.neighbors import NearestNeighbors
 movies_info_merg_df = pd.read_csv('movies_info_merg.csv')
 ratings_df = pd.read_csv('ratings.csv')
 
-# Combine the features into a single string for each movie
-combined_features = movies_info_merg_df['director_name'] + " " + movies_info_merg_df['actor_2_name'] + " " + \
-                    movies_info_merg_df['genres'] + " " + movies_info_merg_df['actor_1_name'] + " " + \
-                    movies_info_merg_df['actor_3_name'] + " " + movies_info_merg_df['plot_keywords'] + " " + \
-                    movies_info_merg_df['movie_title']
+app = Flask(__name__)
+CORS(app)  # Enable Cross-Origin Resource Sharing for this Flask app
 
-# Replace NaN values with empty strings
+# Prepare the data for the KNN model
+combined_features = movies_info_merg_df['director_name'] + " " + \
+                    movies_info_merg_df['actor_2_name'] + " " + \
+                    movies_info_merg_df['genres'] + " " + \
+                    movies_info_merg_df['actor_1_name'] + " " + \
+                    movies_info_merg_df['actor_3_name'] + " " + \
+                    movies_info_merg_df['plot_keywords'] + " " + \
+                    movies_info_merg_df['movie_title']
 combined_features = combined_features.fillna('')
 
 # Create TF-IDF matrix
@@ -27,8 +31,7 @@ model_knn = NearestNeighbors(metric='cosine', algorithm='brute', n_neighbors=1)
 model_knn.fit(tfidf_matrix)
 
 
-app = Flask(__name__)
-CORS(app)
+
 
 def clean_title(title):
     """
@@ -43,6 +46,16 @@ def clean_title(title):
     return title.strip().replace('\xa0', '')
 
 def search_knn(title, movies):
+    """
+    Search for a movie using KNN based on the given title.
+
+    Args:
+        title (str): Title of the movie to search for.
+        movies (DataFrame): DataFrame containing movies data.
+
+    Returns:
+        int: movieId of the found movie.
+    """
     # Combine the title with other features (as done for the dataset)
     title_combined = clean_title(title)  # Add other features if needed
     
@@ -58,6 +71,15 @@ def search_knn(title, movies):
     return results.iloc[0]['movieId']
 
 def find_similar_movies(movie_id):
+    """
+    Find similar movies based on user ratings.
+
+    Args:
+        movie_id (int): movieId of the movie to find similar movies for.
+
+    Returns:
+        DataFrame: DataFrame of top 10 similar movies.
+    """
     similar_users = ratings_df[(ratings_df["movieId"] == movie_id) & (ratings_df["rating"] > 4)]["userId"].unique()
     similar_user_recs = ratings_df[(ratings_df["userId"].isin(similar_users)) & (ratings_df["rating"] > 4)]["movieId"]
     similar_user_recs = similar_user_recs.value_counts() / len(similar_users)
@@ -73,6 +95,15 @@ def find_similar_movies(movie_id):
     return rec_percentages.head(10).merge(movies_info_merg_df, left_index=True, right_on="movieId")[["score", "title", "genres", "movieId"]]
 
 def movie_poster_fetcher(imdb_link):
+    """
+    Fetches the URL of a movie's poster from its IMDb page.
+
+    Args:
+        imdb_link (str): The URL of the movie's IMDb page.
+
+    Returns:
+        str: The URL of the movie's poster image. Returns None if the poster URL is not found.
+    """
     hdr = {'User-Agent': 'Mozilla/5.0'}  # Adjust the header as needed
     url_data = requests.get(imdb_link, headers=hdr).text
     s_data = BeautifulSoup(url_data, 'html.parser')
@@ -81,6 +112,17 @@ def movie_poster_fetcher(imdb_link):
     return movie_poster_link
 
 def get_movie_info(imdb_link):
+    """
+    Scrapes a movie's detailed information from its IMDb page.
+
+    Args:
+        imdb_link (str): The URL of the movie's IMDb page.
+
+    Returns:
+        tuple: A tuple containing the director's name, cast, story summary,
+               additional information, and movie rating. If certain information
+               is not found, 'N/A' is returned in its place.
+    """
     hdr = {'User-Agent': 'Mozilla/5.0'}  # Adjust the header as needed
     url_data = requests.get(imdb_link, headers=hdr).text
     s_data = BeautifulSoup(url_data, 'html.parser')
@@ -103,6 +145,12 @@ def get_movie_info(imdb_link):
 
 @app.route('/search', methods=['GET'])
 def search_movies():
+    """
+    Flask route to handle movie search requests.
+
+    Returns:
+        Response: JSON response containing movie information.
+    """
     title = request.args.get('title')
     if not title:
         return jsonify({'error': 'No title provided'}), 400
