@@ -18,4 +18,6 @@ For collaborative filtering, user ratings are analyzed to find movies popular am
 ## Web Scraping: 
 Additional details about each recommended movie are scraped from their respective IMDb pages.
 
+
+
 More details are given in the notebook.
