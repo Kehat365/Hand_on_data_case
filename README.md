@@ -20,4 +20,4 @@ Additional details about each recommended movie are scraped from their respectiv
 
 
 
-More details are given in the notebook.
+More details and some visualizations are given in the notebook.
