@@ -1,7 +1,6 @@
-# Hand_on_data_case
 This project implements a Movie Recommendation API using Python and Flask. The API provides movie recommendations based on a given movie title. It uses a combination of content-based filtering (via a TF-IDF vectorizer and a K-Nearest Neighbors model) and collaborative filtering (based on user ratings) to suggest similar movies.
 
-# Quick Setup Guide
+# <b> Quick Setup Guide</b>
 ## 1. Download the Repository
 
 Download the repository from GitHub containing the entire project, including both the Flask API and the web application files.
@@ -12,7 +11,7 @@ In a terminal, navigate to the directory of the downloaded repository where the 
 
 Open the vizht.html file from the downloaded repository in a web browser to access the web application. Use it to search for movies and view recommendations.
 
-# How It Works
+# <b>How It Works</b>
 
 ## Data Preparation: 
 Movie data is loaded from big query and processed. Features are combined into a single string for each movie to prepare for the TF-IDF vectorization.
